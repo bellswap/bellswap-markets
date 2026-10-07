@@ -1,0 +1,31 @@
+# Compiler settings and remappings match the Bellswap source repository (solc 0.8.26, cancun, optimizer on,
+# 800 runs, no via-IR). Remappings live in remappings.txt.
+
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+libs = ["lib"]
+# Only the remappings in remappings.txt; no auto-detected entries from nested dependency folders.
+auto_detect_remappings = false
+out = "out"
+cache_path = "cache"
+solc_version = "0.8.26"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 800
+via_ir = false
+
+[profile.default.fuzz]
+runs = 256
+
+# test/mint/invariant/MintInvariants.t.sol carries inline `forge-config:` lines for the c4 and invariant profiles of
+# the source repository; forge refuses inline config that names an undefined profile. These two profiles exist only
+# so those lines parse. Each inherits every setting from [profile.default] except its artifact and cache folders.
+[profile.c4]
+out = "out-c4"
+cache_path = "cache-c4"
+
+[profile.invariant]
+out = "out-invariant"
+cache_path = "cache-invariant"
