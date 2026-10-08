@@ -1,10 +1,10 @@
 # Bellswap markets
 
-Unaudited. This repository holds the source of the Bellswap market contracts on Robinhood Chain. A market is a synthetic ERC-20 minted against USDG collateral at a reference price relayed from Ethereum. The repository contains the V2 market (`BellMarketV2`), the V2 factory that lists markets from a fixed label menu (`BellMarketFactoryV2`), and the V3 factory (`BellMarketFactoryV3`), which lowers the collateral bounds and adds the tier TL1, listed on testnet as the market Tanker (symbol TANKR).
+Unaudited. This repository holds the source of the Bellswap market contracts on Robinhood Chain. A market is a synthetic ERC-20 minted against USDG collateral at a reference price relayed from Ethereum. The repository contains the V2 market (`BellMarketV2`), the V2 factory that lists markets from a fixed label menu (`BellMarketFactoryV2`), and the V3 factory (`BellMarketFactoryV3`), which lowers the collateral bounds and adds the tier TL1, listed as the market Tanker (symbol TANKR) on Robinhood Chain testnet and, since 7 October 2026, on Robinhood Chain mainnet.
 
 ## Where the live code is
 
-https://github.com/bellswap/bellswap-contracts is the source of record for the Robinhood Chain mainnet deployment: the hook, the pool, the reference feed, the v1 market factory and its market bsX0. This repository adds the V2 market and the V2 and V3 factories, with their tests. Files that exist in both repositories (the v1 market and factory, `MarketMath.sol`, the reference feed) are byte-identical.
+https://github.com/bellswap/bellswap-contracts is the source of record for the Robinhood Chain mainnet deployment: the hook, the pool, the reference feed, the v1 market factory and its market bsX0. This repository adds the V2 market and the V2 and V3 factories, with their tests. Files that exist in both repositories (the v1 market and factory, `MarketMath.sol`, the reference feed, the hook interface `IBellswapHook.sol`) are byte-identical.
 
 ## Contents
 
@@ -19,10 +19,15 @@ https://github.com/bellswap/bellswap-contracts is the source of record for the R
 | `src/mint/BellMarket.sol`, `src/mint/BellMarketFactory.sol` | The v1 market and factory. The market test suites run against v1, V2 and V3. |
 | `script/lib/LabelLint.sol` | Off-chain naming lint for label menus, run before deployment and before listing. |
 | `script/lib/BellswapScript.sol` | Base of the deploy scripts. The V3 factory tests check its tier menu. |
+| `script/DeployMintV3.s.sol` | Deploys `BellMarketFactoryV3` through the CREATE2 proxy; on chain 4663 it accepts only the pinned TANKR menu (tier TL1, market id 100). |
+| `script/CreateMarketV2.s.sol` | Lists one labelled market on a V2 or V3 factory with `createMarket`, after checking every refusal of the factory; dry run by default. |
+| `script/CreatePool.s.sol` | Creates a market's synthetic pool on the Bellswap hook at a start price checked against the market's reference; dry run by default. |
+| `script/lib/PoolPrice.sol`, `script/lib/PoolSeeder.sol` | Price conversions of `CreatePool`, and its liquidity and swap helper for test and local chains. |
+| `src/hook/IBellswapHook.sol` | Interface of the hook `CreatePool` calls. The hook itself is in bellswap-contracts. |
 | `src/mocks/`, `test/` | Test token, tests and test support. |
 | `src/vendor/AddressAliasHelper.sol` | Unmodified Apache-2.0 code from OffchainLabs token-bridge-contracts. |
 
-Deploy scripts are not included.
+The deploy scripts used for TANKR are included: `DeployMintV3`, `CreateMarketV2` and `CreatePool`. Each reads the address book of its chain from the environment variable `BELLSWAP_CONFIG_JSON` and the book of the parent chain from `BELLSWAP_PARENT_CONFIG_JSON`. `script/config/` holds the address books for chain 4663 and its parent chain 1, filled with the mainnet addresses as of the TANKR runs on 7 October 2026: the hook, the reference feed factory, the v1 and V3 market factories, the TANKR label, market 100 and the pool ids.
 
 ## Deployments
 
@@ -40,9 +45,25 @@ Both contracts are verified on Sourcify (exact match) and on Blockscout:
 
 Every project source file in the two Sourcify records is byte-identical to the file of the same path here.
 
-### Robinhood Chain mainnet
+### Robinhood Chain mainnet (chain 4663)
 
-The market bsX0 runs on the v1 factory. Its addresses and source are in bellswap-contracts. The V3 factory is not deployed on mainnet yet.
+| Contract | Address | Transaction |
+|---|---|---|
+| `BellMarketFactoryV3` | `0x5c4B9baf485D1B72f46Ef84889c33CBca99f3D1E` | deploy `0x0003cdf7cd4884691b090edb9cfe54f261625a6df578859b8e1cb7c23eca82f7` |
+| Market 100, Tanker (TANKR), a `BellMarketV2` on tier TL1 | `0x0B199dA32205A5986f8DBDbed1b9c9c86FD7B3f2` | `createMarket` `0x5ef560af00c4f1331f1c542e5c7e9337c826337fc1447cb808c21bd30f71b2b5` (7 October 2026) |
+
+The market's collateral is USDG `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`.
+
+Both contracts are verified on Sourcify (exact match) and shown on Blockscout:
+
+- https://repo.sourcify.dev/4663/0x5c4B9baf485D1B72f46Ef84889c33CBca99f3D1E
+- https://repo.sourcify.dev/4663/0x0B199dA32205A5986f8DBDbed1b9c9c86FD7B3f2
+- https://robinhoodchain.blockscout.com/address/0x5c4B9baf485D1B72f46Ef84889c33CBca99f3D1E
+- https://robinhoodchain.blockscout.com/address/0x0B199dA32205A5986f8DBDbed1b9c9c86FD7B3f2
+
+Every project source file in the two Sourcify records is byte-identical to the file of the same path here.
+
+The market bsX0 runs on the v1 factory. Its addresses and source are in bellswap-contracts.
 
 ## Build and test
 
@@ -54,7 +75,7 @@ forge build
 forge test
 ```
 
-At import: 35 test suites, 328 tests, all passing. The gas snapshots in `test/mint/v2` and `test/mint/v3` check with, for example:
+At tag tankr-mainnet-2026-10-07: 35 test suites, 328 tests, all passing. The gas snapshots in `test/mint/v2` and `test/mint/v3` check with, for example:
 
 ```
 forge snapshot --match-path test/mint/v3/CreateMarketGas.t.sol --snap test/mint/v3/CreateMarketGas.snap --check
@@ -72,7 +93,7 @@ Compiler: solc 0.8.26, EVM version cancun, optimizer on with 800 runs, no via-IR
 | openzeppelin-contracts | https://github.com/OpenZeppelin/openzeppelin-contracts | v5.7.0 | `cab19933c33c2ad1d4c7a84864a3601dddfd16f3` |
 | v4-core | https://github.com/Uniswap/v4-core | v4.0.0 | `e50237c43811bd9b526eff40f26772152a42daba` |
 
-v4-core is fetched with its submodules so that `remappings.txt` matches the source repository. No file in this repository imports it.
+v4-core is fetched with its submodules so that `remappings.txt` matches the source repository. Only `script/CreatePool.s.sol`, its helpers in `script/lib/` and `src/hook/IBellswapHook.sol` import it.
 
 ## Tier TL1
 

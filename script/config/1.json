@@ -1,0 +1,14 @@
+{
+  "chainId": 1,
+  "name": "Ethereum mainnet (parent of 4663)",
+  "childChainId": 4663,
+  "inbox": "0x1A07cc4BD17E0118BdB54D70990D2158AbAD7a2D",
+  "rollup": "0x23A19d23e89166adedbDcB432518AB01e4272D94",
+  "stacks": {
+    "M": {
+      "d1": "0xC45E988d5AE7652d172cA5321A6311D7f61B0e31",
+      "ondoOracle": "0x914D5Cb27cb30E80BdE8215ff577eD63Eb986B79",
+      "relay": "0xe0D5f55480705E9e11B6e8d3b53B7e401Cd17645"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "chainId": 4663,
+  "name": "Robinhood Chain mainnet",
+  "parentChainId": 1,
+  "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+  "usdg": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+  "hook": "0xe136bc1a37Fa63cbD7051D0545572a69F815A080",
+  "stacks": {
+    "M": {
+      "d1": "parent:stacks.M.d1",
+      "relay": "parent:stacks.M.relay",
+      "ondoOracleL1": "0x914D5Cb27cb30E80BdE8215ff577eD63Eb986B79",
+      "subjects": [
+        "0xEcA55ac71f83931B7e074228AEBc9104F13d8c02"
+      ],
+      "aggregators": [],
+      "viewAges": [
+        0
+      ],
+      "menu": [
+        "T0",
+        "T3"
+      ],
+      "referenceFactory": "0x6f56B432f66b906E9488aB4889d8746055861f74",
+      "marketFactory": "0xf5Ff223212d0f3D8E17116966190Fac321a1AfA9",
+      "feeds": {
+        "0xEcA55ac71f83931B7e074228AEBc9104F13d8c02": "0xA8Dd192FFcAcC451D104BEEB628190ab4D3aA6ad"
+      },
+      "views": {
+        "0xA8Dd192FFcAcC451D104BEEB628190ab4D3aA6ad-0": "0x33e0BE748CBF8b283CDc0Cb9C9C809a78B1A16c4"
+      },
+      "firstMarketIdV3": 100,
+      "menuV3": [
+        "TL1"
+      ],
+      "labelsV3": [
+        {
+          "name": "Tanker",
+          "symbol": "TANKR",
+          "feed": "0xA8Dd192FFcAcC451D104BEEB628190ab4D3aA6ad",
+          "tier": "TL1",
+          "capUsd": 10000000000
+        }
+      ],
+      "marketFactoryV3": "0x5c4B9baf485D1B72f46Ef84889c33CBca99f3D1E",
+      "marketsV3": {
+        "100": "0x0B199dA32205A5986f8DBDbed1b9c9c86FD7B3f2"
+      }
+    }
+  },
+  "pools": {
+    "0xDfEd3508dcb50D760e3F2F2dd49dCFd67E12B0b3": "0x1c45f406c6ce0ee24c8b10172e2af4da7780962e2f242a4795c0a5cdf46633c2",
+    "0x0B199dA32205A5986f8DBDbed1b9c9c86FD7B3f2": "0x6728e02c29014a5f4703c4367f0638a35351dbc8a5e9a85de91829896da0641f"
+  }
+}

@@ -23,6 +23,13 @@ interface IOwnedProbe {
     function owner() external view returns (address);
 }
 
+/// @notice The two Vm cheatcodes the V3 mainnet flag is read with, both declared view: resolveEnv changes no state
+/// but forge-std declares it non-view, and _v3Allowed must stay view.
+interface IRawEnv {
+    function envExists(string calldata name) external view returns (bool);
+    function resolveEnv(string calldata input) external view returns (string memory);
+}
+
 /// @title BellswapScript
 /// @notice Shared base of every Bellswap deploy script (SPEC 10). It provides:
 /// - the address book: the JSON of script/config/<chainid>.json, passed in by script/run.sh as the environment
@@ -34,7 +41,8 @@ interface IOwnedProbe {
 /// - outputs: every deployed address is printed as "BELLSWAP_SET <json.path> <value>"; run.sh writes those lines
 ///   back into the config file after a successful --broadcast run;
 /// - the tier menu of SPEC 5.3 (T0, T1, T2), T3 (T0 without warm-up, on mainnet since 2026-10-04) and the M1 tiers TL0
-///   and TL1 (Robinhood Chain testnet only; TL1 fits only BellMarketFactoryV3's bounds);
+///   and TL1 (Robinhood Chain testnet, and 4663 behind BELLSWAP_V3_MAINNET_CHAIN; TL1 fits only BellMarketFactoryV3's
+///   bounds);
 /// - the label menu of BellMarketFactoryV2 (stacks.<S>.labelsV2).
 abstract contract BellswapScript is Script {
     error MainnetNotConfirmed(string expectedDescription);
@@ -48,6 +56,9 @@ abstract contract BellswapScript is Script {
     string internal constant GATE_ENV = "BELLSWAP_MAINNET_CONFIRMED";
     string internal constant CONFIG_ENV = "BELLSWAP_CONFIG_JSON";
     string internal constant PARENT_CONFIG_ENV = "BELLSWAP_PARENT_CONFIG_JSON";
+    /// @dev Lifts the V3 (TL1) testnet-only guards on Robinhood Chain when it holds "4663" (DESIGN.md decision 12,
+    /// lifted by the founder on 2026-10-07).
+    string internal constant V3_MAINNET_ENV = "BELLSWAP_V3_MAINNET_CHAIN";
 
     /// @dev CREATE2 proxy on all four chains (SPEC 3.1, FACT 69 bytes); forge routes `new X{salt: s}` through it.
     address internal constant CREATE2_PROXY = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
@@ -308,7 +319,8 @@ abstract contract BellswapScript is Script {
             return IBellMarketFactory.Tier(25_000, 15_000, 500, 1_000, 172_800, 259_200, 604_800, 10_500, 600);
         }
         if (h == keccak256("TL1")) {
-            // M1 step S1 on BellMarketFactoryV3 (MIN_MINT_CR_BPS 17_500, MIN_CR_GAP_BPS 2_500, rule 2), testnet only.
+            // M1 step S1 on BellMarketFactoryV3 (MIN_MINT_CR_BPS 17_500, MIN_CR_GAP_BPS 2_500, rule 2), testnet, and
+            // 4663 behind BELLSWAP_V3_MAINNET_CHAIN.
             return IBellMarketFactory.Tier(17_500, 15_000, 500, 1_000, 129_600, 259_200, 604_800, 10_500, 600);
         }
         revert UnknownTier(name);
@@ -330,6 +342,29 @@ abstract contract BellswapScript is Script {
             if (h != keccak256("T0") && h != keccak256("T3")) return false;
         }
         return true;
+    }
+
+    /// @notice The V3 menu allowed on 4663: exactly [TL1] (tiers.md section 2; the mainnet counterpart of DM2:96-98).
+    function _isMainnetMenuV3(string[] memory names) internal pure returns (bool) {
+        return names.length == 1 && keccak256(bytes(names[0])) == keccak256("TL1");
+    }
+
+    /// @notice Whether the V3 factory may be used here: test and local chains always; 4663 only with
+    /// BELLSWAP_V3_MAINNET_CHAIN equal to the chain id; chain 1 never.
+    function _v3Allowed() internal view returns (bool) {
+        if (!_isMainnet()) return true;
+        if (block.chainid != ROBINHOOD) return false;
+        return keccak256(bytes(_v3MainnetFlag())) == keccak256(bytes(vm.toString(block.chainid)));
+    }
+
+    /// @notice The raw value of BELLSWAP_V3_MAINNET_CHAIN ("" when unset), byte for byte. vm.envOr and vm.envString
+    /// coerce the value (Forge 1.7.1 strips trailing whitespace and one layer of quotes, so "4663 " would read as
+    /// 4663); resolveEnv returns it unchanged. Virtual so tests pass the value in: vm.setEnv is process-wide and forge
+    /// runs tests in parallel.
+    function _v3MainnetFlag() internal view virtual returns (string memory) {
+        IRawEnv env = IRawEnv(address(vm));
+        if (!env.envExists(V3_MAINNET_ENV)) return "";
+        return env.resolveEnv(string.concat("${", V3_MAINNET_ENV, "}"));
     }
 
     /// @notice Index of `name` in `names`; reverts UnknownTier when absent.
